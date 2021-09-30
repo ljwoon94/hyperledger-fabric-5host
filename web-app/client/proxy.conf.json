@@ -1,0 +1,13 @@
+{
+
+    "/": {
+ 
+       "target": "http://13.124.175.72:8081",
+ 
+       "secure": false,
+ 
+       "logLevel": "debug"
+ 
+    }
+ 
+ }

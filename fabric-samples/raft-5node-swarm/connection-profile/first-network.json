@@ -1,0 +1,55 @@
+{
+	"name": "first-network",
+	"version": "1.0.0",
+	"client": {
+		"tlsEnable": true,
+		"adminCredential": {
+			"id": "exploreradmin",
+			"password": "exploreradminpw"
+		},
+		"enableAuthentication": true,
+		"organization": "Org5MSP",
+		"connection": {
+			"timeout": {
+				"peer": {
+					"endorser": "300"
+				},
+				"orderer": "300"
+			}
+		}
+	},
+	"channels": {
+		"org5channel": {
+			"peers": {
+				"peer0.org5.example.com": {},
+				"peer1.org5.example.com": {}
+			}
+		}
+	},
+	"organizations": {
+		"Org5MSP": {
+			"mspid": "Org5MSP",
+			"adminPrivateKey": {
+				"path": "/tmp/crypto/peerOrganizations/org5.example.com/users/Admin@org5.example.com/msp/keystore/7adbd606e6d89b37987b19c1f337e1afad607eaf1f83a145c910a1052385ace2_sk"
+			},
+			"peers": ["peer0.org5.example.com","peer1.org5.example.com"],
+			"signedCert": {
+				"path": "/tmp/crypto/peerOrganizations/org5.example.com/users/Admin@org5.example.com/msp/signcerts/Admin@org5.example.com-cert.pem"
+			}
+		}
+	},
+	"peers": {
+		"peer0.org5.example.com": {
+			"tlsCACerts": {
+				"path": "/tmp/crypto/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls/ca.crt"
+			},
+			"url": "grpcs://peer0.org5.example.com:15051"
+		},
+		"peer1.org5.example.com": {
+            "tlsCACerts": {
+                "path": "/tmp/crypto/peerOrganizations/org5.example.com/peers/peer1.org5.example.com/tls/ca.crt"
+            },
+            "url": "grpcs://peer1.org5.example.com:16051"
+        }
+	}
+}

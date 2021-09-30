@@ -1,0 +1,4 @@
+fabric-samples/bin/
+fabric-samples/raft-5node-swarm/channel-artifacts/
+fabric-samples/raft-5node-swarm/crypto-config/
+web-app/server/node_modules/

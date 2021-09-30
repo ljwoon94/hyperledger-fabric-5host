@@ -1,0 +1,46 @@
+@import '../../colors.scss';
+
+
+:host {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  background-color: $background;
+  flex-direction: column;
+  // margin: 0 13%;
+
+}
+
+header {
+  // display: flex;
+  background-color: $header-background;
+
+  h1 {
+    color: $header-text;
+    font-size: 1.8em;
+  }
+  .header{
+    float: right;
+    
+    p {
+      color: $header-text;
+      float: left;
+      margin: 10px;
+    }
+  
+    button {
+      display:inline-block;
+    }
+  }
+
+  
+}
+
+body {
+  margin: 1em 0;
+  background-color: $background;
+  height: 100%;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
