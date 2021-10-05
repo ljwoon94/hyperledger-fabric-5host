@@ -3,6 +3,8 @@ const { FileSystemWallet, Gateway } = require('fabric-network');
 const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
+const { KJUR, KEYUTIL } = require('jsrsasign');
+const CryptoJS = require('crypto-js');
 
 
 const filePath = path.join(process.cwd(), '/connection.yaml');
@@ -211,6 +213,29 @@ exports.sendContract = async function(key, contract_signA , contract_receiver, s
             response.error = 'An identity for the user ' + userName + ' does not exist in the wallet. Register ' + userName + ' first';
             return response;
         }
+
+        var filename = path.resolve(__dirname + '..','..', '..','uploads','표준근로계약서.pdf');
+
+        // 업로드한 pdf 파일 해시화
+        // calculate Hash from the specified file
+        const fileLoaded = fs.readFileSync(filename, 'utf8');
+        var hashToAction = CryptoJS.SHA256(fileLoaded).toString();
+        console.log("Hash of the file: " + hashToAction);
+
+        // extract certificate info from wallet
+        // 지갑에 있는 개인키 불러오기 
+        const walletContents = await wallet.export(userName);
+        const userPrivateKey = walletContents.privateKey;
+
+        // 암호화
+        var sig = new KJUR.crypto.Signature({"alg": "SHA256withECDSA"});
+        // 개인키와 해시값(pdf)를 서명 및 암호화
+        sig.init(userPrivateKey, "");
+        sig.updateHex(hashToAction);
+        var sigValueHex = sig.sign();
+        var sigValueBase64 = new Buffer.from(sigValueHex, 'hex').toString('base64');
+        console.log("Signature: " + sigValueBase64);
+
         // Create a new gateway for connecting to our peer node.
         const gateway = new Gateway();
         await gateway.connect(connectionFile, { wallet, identity: userName, discovery: { enabled: true, asLocalhost: true } });
@@ -220,7 +245,7 @@ exports.sendContract = async function(key, contract_signA , contract_receiver, s
         const contract = network.getContract('contract');
         // Submit the specified transaction.
         // changeCarOwner transaction - requires 2 args , ex: ('changeCarOwner', 'CAR10', 'Dave')
-        await contract.submitTransaction('sendContract', key, contract_signA, contract_receiver, state);
+        await contract.submitTransaction('sendContract', key, contract_signA, contract_receiver, state, sigValueBase64);
         console.log('Transaction has been submitted');
         // Disconnect from the gateway.
         await gateway.disconnect();
@@ -232,6 +257,7 @@ exports.sendContract = async function(key, contract_signA , contract_receiver, s
         return response; 
     }
 }
+
 // 계약서 완료
 exports.signedContract = async function(key, contract_signB , state, userName) {
     try {
@@ -247,6 +273,28 @@ exports.signedContract = async function(key, contract_signB , state, userName) {
             console.log('Run the registerUser.js application before retrying');
             return;
         }
+
+        var filename = path.resolve(__dirname + '..','..','..','uploads','표준근로계약서.pdf');
+        // 업로드한 pdf 파일 해시화
+        // calculate Hash from the specified file
+        const fileLoaded = fs.readFileSync(filename, 'utf8');
+        var hashToAction = CryptoJS.SHA256(fileLoaded).toString();
+        console.log("Hash of the file: " + hashToAction);
+
+        // extract certificate info from wallet
+        // 지갑에 있는 개인키 불러오기 
+        const walletContents = await wallet.export(userName);
+        const userPrivateKey = walletContents.privateKey;
+
+        // 암호화
+        var sig = new KJUR.crypto.Signature({"alg": "SHA256withECDSA"});
+        // 개인키와 해시값(pdf)를 서명 및 암호화
+        sig.init(userPrivateKey, "");
+        sig.updateHex(hashToAction);
+        var sigValueHex = sig.sign();
+        var sigValueBase64 = new Buffer.from(sigValueHex, 'hex').toString('base64');
+        console.log("Signature: " + sigValueBase64);
+
         // Create a new gateway for connecting to our peer node.
         const gateway = new Gateway();
         await gateway.connect(connectionFile, { wallet, identity: userName, discovery: { enabled: true, asLocalhost: true } });
@@ -256,7 +304,7 @@ exports.signedContract = async function(key, contract_signB , state, userName) {
         const contract = network.getContract('contract');
         // Submit the specified transaction.
         // changeCarOwner transaction - requires 2 args , ex: ('changeCarOwner', 'CAR10', 'Dave')
-        await contract.submitTransaction('signedContract', key, contract_signB, state);
+        await contract.submitTransaction('signedContract', key, contract_signB, state, sigValueBase64);
         console.log('Transaction has been submitted');
         // Disconnect from the gateway.
         await gateway.disconnect();

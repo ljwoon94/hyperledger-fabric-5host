@@ -2,7 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const morgan = require("morgan");
-const multer = require('multer');
+
 var network = require("./fabric/network.js");
 const registerUser = require('../registerUser');
 // 사용자 정보 불러오기
@@ -45,37 +45,6 @@ mongoose.connect(
     console.log("DB에 연결되었습니다.");
   }
 );
-
-/* passwork 암호화 모듈 */
-const bcrypt = require("bcrypt");
-/* ---------------------- */
-
-// multer 파일 업로드 경로
-const DIR = './public/';
-
-//multer 웹서버에 저장
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, DIR);
-  },
-  filename: (req, file, cb) => {
-    const fileName = file.originalname.toLowerCase().split(' ').join('-');
-    cb(null, fileName)
-  }
-});
-
-var upload = multer({
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
-      cb(null, true);
-    } else {
-      cb(null, false);
-      return cb(new Error('Only .png, .jpg and .jpeg format allowed!'));
-    }
-  }
-});
-
 
 // 회원가입
 app.post("/signUp", (req, res) => {
@@ -193,36 +162,6 @@ app.post("/login", (req, res) => {
     res.status(500).send("server error");
   }
 });
-
-// 이미지 업로드
-app.post('/create-user', upload.array('avatar', 6), (req, res, next) => {
-  const reqFiles = []
-  const url = req.protocol + '://' + req.get('host')
-  for (var i = 0; i < req.files.length; i++) {
-    reqFiles.push(url + '/public/' + req.files[i].filename)
-  }
-
-  const user = new User({
-    _id: new mongoose.Types.ObjectId(),
-    avatar: reqFiles
-  });
-  user.save().then(result => {
-    console.log(result);
-    res.status(201).json({
-      message: "Done upload!",
-      userCreated: {
-        _id: result._id,
-        avatar: result.avatar
-      }
-    })
-  }).catch(err => {
-    console.log(err),
-      res.status(500).json({
-        error: err
-      });
-  })
-})
-
 
 // 작성자, 받은자 기준으로 목록조회
 app.post('/queryAllCars', (req, res) => {
