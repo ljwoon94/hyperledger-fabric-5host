@@ -15,7 +15,7 @@ const caCertPath = path.resolve(__dirname, '..', '..', '..', '..', 'fabric-sampl
 const caCert = fs.readFileSync(caCertPath, 'utf8');
 
 // 계약서 생성에 필요한 계약서 전체 갯수 불러오기
-exports.totalNumberContracts = async function(userName) {
+exports.totalNumberContracts = async function (userName) {
     try {
         console.log('starting to TotalNumberContracts')
         var response = {};
@@ -50,7 +50,7 @@ exports.totalNumberContracts = async function(userName) {
     }
 }
 // 계약서 생성
-exports.createContract = async function(key, contract_name, contract_contents, contract_companyA, contract_companyB, contract_date, contract_period, state, userName) {
+exports.createContract = async function (key, contract_name, contract_contents, contract_companyA, contract_companyB, contract_date, contract_period, state, userName) {
     try {
         var response = {};
         // Create a new file system based wallet for managing identities.
@@ -69,7 +69,7 @@ exports.createContract = async function(key, contract_name, contract_contents, c
         console.log('we here in CreateContract')
         const gateway = new Gateway();
         await gateway.connect(connectionFile, { wallet, identity: userName, discovery: { enabled: true, asLocalhost: true } });
-        
+
         // Get the network (channel) our contract is deployed to.
         const network = await gateway.getNetwork('mychannel');
         // Get the contract from the network.
@@ -81,15 +81,15 @@ exports.createContract = async function(key, contract_name, contract_contents, c
         // Disconnect from the gateway.
         await gateway.disconnect();
         response.msg = 'CreateContract Transaction has been submitted';
-        return response;        
+        return response;
     } catch (error) {
         console.error(`Failed to submit transaction: ${error}`);
         response.error = error.message;
-        return response; 
+        return response;
     }
 }
 // 계약서 수정
-exports.modifyContract = async function(key, new_contract_name, new_contract_contents, new_contract_companyB, new_contract_receiver, new_contract_date, new_contract_period, userName) {
+exports.modifyContract = async function (key, new_contract_name, new_contract_contents, new_contract_companyB, new_contract_receiver, new_contract_date, new_contract_period, userName) {
     try {
         var response = {};
         // Create a new file system based wallet for managing identities.
@@ -118,15 +118,15 @@ exports.modifyContract = async function(key, new_contract_name, new_contract_con
         // Disconnect from the gateway.
         await gateway.disconnect();
         response.msg = 'ModifyContract Transaction has been submitted';
-        return response;        
+        return response;
     } catch (error) {
         console.error(`Failed to submit transaction: ${error}`);
         response.error = error.message;
-        return response; 
+        return response;
     }
 }
 // 유저 아이디에 따른 목록 표시
-exports.queryContractList = async function(userName) {
+exports.queryContractList = async function (userName) {
     try {
         console.log('starting to QueryContractList')
         console.log(userName);
@@ -162,7 +162,7 @@ exports.queryContractList = async function(userName) {
     }
 }
 // 계약서 상세 조회
-exports.selectContract = async function(key, userName) {
+exports.selectContract = async function (key, userName) {
     try {
         console.log('starting to SelectContract')
         var response = {};
@@ -186,14 +186,14 @@ exports.selectContract = async function(key, userName) {
         const network = await gateway.getNetwork('mychannel');
         // Get the contract from the network.
         const contract = network.getContract('contract');
-        const result = await contract.evaluateTransaction('selectContract',key);
+        const result = await contract.evaluateTransaction('selectContract', key);
         // response.msg = ' select Result submitted';
         // 상세조회에서 나온 값 추출
         let resultJSON = JSON.parse(result);
 
 
         // pdf 파일 불러오기
-        const filename = path.resolve(__dirname + '..','..', '..','uploads','표준근로계약서.pdf');
+        const filename = path.resolve(__dirname + '..', '..', '..', 'uploads', '부동산매매계약서.pdf');
         const fileLoaded = fs.readFileSync(filename, 'utf8');
         // 불러온 pdf 파일 hash 값 추출
         var hashToAction = CryptoJS.SHA256(fileLoaded).toString();
@@ -201,7 +201,7 @@ exports.selectContract = async function(key, userName) {
         console.log("");
 
         // 갑 인증서 불러오기
-        const certfile = path.resolve(__dirname + '..','..', '..','wallet', resultJSON.contract_writer, resultJSON.contract_writer);
+        const certfile = path.resolve(__dirname + '..', '..', '..', 'wallet', resultJSON.contract_writer, resultJSON.contract_writer);
         const certLoaded = fs.readFileSync(certfile, 'utf8');
         const certfileObj = JSON.parse(certLoaded);
         // console.log(certfileObj.enrollment.identity.certificate);
@@ -222,43 +222,47 @@ exports.selectContract = async function(key, userName) {
 
         // perform signature checking
         var userPublicKey = KEYUTIL.getKey(certificate);
-        var recover = new KJUR.crypto.Signature({"alg": "SHA256withECDSA"});
+        var recover = new KJUR.crypto.Signature({ "alg": "SHA256withECDSA" });
         recover.init(userPublicKey);
         recover.updateHex(hashToAction);
         var getBackSigValueHex = new Buffer.from(resultJSON.contract_hashA, 'base64').toString('hex');
         console.log("갑 서명 확인 Signature verified with certificate provided: " + recover.verify(getBackSigValueHex));
         console.log("");
 
-        // 을 인증서 불러오기
-        const certBfile = path.resolve(__dirname + '..','..', '..','wallet', resultJSON.contract_receiver, resultJSON.contract_receiver);
-        const certBLoaded = fs.readFileSync(certBfile, 'utf8');
-        const certBfileObj = JSON.parse(certBLoaded);
-        // console.log(certBfileObj.enrollment.identity.certificate);
-        const certificateB = certBfileObj.enrollment.identity.certificate;
+        if (resultJSON.contract_receiver) {
+            // 을 인증서 불러오기
+            const certBfile = path.resolve(__dirname + '..', '..', '..', 'wallet', resultJSON.contract_receiver, resultJSON.contract_receiver);
+            const certBLoaded = fs.readFileSync(certBfile, 'utf8');
+            const certBfileObj = JSON.parse(certBLoaded);
+            // console.log(certBfileObj.enrollment.identity.certificate);
+            const certificateB = certBfileObj.enrollment.identity.certificate;
 
-        console.log("을 계약서 서명 시간 " + resultJSON.contract_timeB);
-        console.log("");
+            console.log("을 계약서 서명 시간 " + resultJSON.contract_timeB);
+            console.log("");
 
-        // Show info about certificate provided
-        const certBObj = new X509();
-        certBObj.readCertPEM(certificateB);
-        console.log("Detail of certificate provided")
-        console.log("계약자: " + certBObj.getSubjectString());
-        console.log("Issuer (CA) Subject: " + certBObj.getIssuerString());
-        console.log("Valid period: " + certBObj.getNotBefore() + " to " + certBObj.getNotAfter());
-        console.log("CA Signature validation: " + certBObj.verifySignature(KEYUTIL.getKey(caCert)));
-        console.log("");
+            // Show info about certificate provided
+            const certBObj = new X509();
+            certBObj.readCertPEM(certificateB);
+            console.log("Detail of certificate provided")
+            console.log("계약자: " + certBObj.getSubjectString());
+            console.log("Issuer (CA) Subject: " + certBObj.getIssuerString());
+            console.log("Valid period: " + certBObj.getNotBefore() + " to " + certBObj.getNotAfter());
+            console.log("CA Signature validation: " + certBObj.verifySignature(KEYUTIL.getKey(caCert)));
+            console.log("");
 
-        // perform signature checking
-        var userBPublicKey = KEYUTIL.getKey(certificateB);
-        var recover = new KJUR.crypto.Signature({"alg": "SHA256withECDSA"});
-        recover.init(userBPublicKey);
-        recover.updateHex(hashToAction);
-        var getBackSigValueHex = new Buffer.from(resultJSON.contract_hashB, 'base64').toString('hex');
-        console.log("을 서명 확인 Signature verified with certificate provided: " + recover.verify(getBackSigValueHex));
-        console.log("");
+            // perform signature checking
+            var userBPublicKey = KEYUTIL.getKey(certificateB);
+            var recover = new KJUR.crypto.Signature({ "alg": "SHA256withECDSA" });
+            recover.init(userBPublicKey);
+            recover.updateHex(hashToAction);
+            var getBackSigValueHex = new Buffer.from(resultJSON.contract_hashB, 'base64').toString('hex');
+            console.log("을 서명 확인 Signature verified with certificate provided: " + recover.verify(getBackSigValueHex));
+            console.log("");
+        }
 
-        return result;        
+
+
+        return result;
     } catch (error) {
         console.error(`Failed to evaluate transaction: ${error}`);
         response.error = error.message;
@@ -266,7 +270,7 @@ exports.selectContract = async function(key, userName) {
     }
 }
 // 계약서 전송
-exports.sendContract = async function(key, contract_signA , contract_receiver, state, userName) {
+exports.sendContract = async function (key, contract_signA, contract_receiver, state, userName) {
     try {
         var response = {};
         // Create a new file system based wallet for managing identities.
@@ -282,7 +286,7 @@ exports.sendContract = async function(key, contract_signA , contract_receiver, s
             return response;
         }
 
-        var filename = path.resolve(__dirname + '..','..', '..','uploads','표준근로계약서.pdf');
+        var filename = path.resolve(__dirname + '..', '..', '..', 'uploads', '부동산매매계약서.pdf');
 
         // 업로드한 pdf 파일 해시화
         // calculate Hash from the specified file
@@ -296,11 +300,13 @@ exports.sendContract = async function(key, contract_signA , contract_receiver, s
         const userPrivateKey = walletContents.privateKey;
 
         // 암호화
-        var sig = new KJUR.crypto.Signature({"alg": "SHA256withECDSA"});
+        var sig = new KJUR.crypto.Signature({ "alg": "SHA256withECDSA" });
         // 개인키와 해시값(pdf)를 서명 및 암호화
         sig.init(userPrivateKey, "");
         sig.updateHex(hashToAction);
+        // 개인키를 가지고 pdf파일(해시)에 서명
         var sigValueHex = sig.sign();
+        // 서명을 base64로 이용해 버퍼형식으로 저장
         var sigValueBase64 = new Buffer.from(sigValueHex, 'hex').toString('base64');
         console.log("Signature: " + sigValueBase64);
 
@@ -318,16 +324,16 @@ exports.sendContract = async function(key, contract_signA , contract_receiver, s
         // Disconnect from the gateway.
         await gateway.disconnect();
         response.msg = 'sendContract Transaction has been submitted';
-        return response;        
+        return response;
     } catch (error) {
         console.error(`Failed to submit transaction: ${error}`);
         response.error = error.message;
-        return response; 
+        return response;
     }
 }
 
 // 계약서 완료
-exports.signedContract = async function(key, contract_signB , state, userName) {
+exports.signedContract = async function (key, contract_signB, state, userName) {
     try {
         var response = {};
         // Create a new file system based wallet for managing identities.
@@ -342,7 +348,7 @@ exports.signedContract = async function(key, contract_signB , state, userName) {
             return;
         }
 
-        var filename = path.resolve(__dirname + '..','..','..','uploads','표준근로계약서.pdf');
+        var filename = path.resolve(__dirname + '..', '..', '..', 'uploads', '부동산매매계약서.pdf');
         // 업로드한 pdf 파일 해시화
         // calculate Hash from the specified file
         const fileLoaded = fs.readFileSync(filename, 'utf8');
@@ -355,7 +361,7 @@ exports.signedContract = async function(key, contract_signB , state, userName) {
         const userPrivateKey = walletContents.privateKey;
 
         // 암호화
-        var sig = new KJUR.crypto.Signature({"alg": "SHA256withECDSA"});
+        var sig = new KJUR.crypto.Signature({ "alg": "SHA256withECDSA" });
         // 개인키와 해시값(pdf)를 서명 및 암호화
         sig.init(userPrivateKey, "");
         sig.updateHex(hashToAction);
@@ -377,10 +383,10 @@ exports.signedContract = async function(key, contract_signB , state, userName) {
         // Disconnect from the gateway.
         await gateway.disconnect();
         response.msg = 'signedContract Transaction has been submitted';
-        return response;        
+        return response;
     } catch (error) {
         console.error(`Failed to submit transaction: ${error}`);
         response.error = error.message;
-        return response; 
+        return response;
     }
 }
