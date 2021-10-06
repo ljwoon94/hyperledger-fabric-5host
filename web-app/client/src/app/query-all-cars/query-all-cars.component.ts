@@ -64,4 +64,13 @@ export class QueryAllCarsComponent implements OnInit {
   }
     return this.apiService.querySelectCar(data.key, this._info.id)
   }
+
+  // 계약서 다운로드
+  onfileDownload(key) {
+    
+    console.log('다운로드', key)
+    this.http.get(`http://localhost:8081/download/` + key, { responseType: 'blob'}).subscribe((res:any) => {
+      window.open(window.URL.createObjectURL(res));
+    });
+  }
 }
