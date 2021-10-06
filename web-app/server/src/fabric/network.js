@@ -3,13 +3,16 @@ const { FileSystemWallet, Gateway } = require('fabric-network');
 const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
-const { KJUR, KEYUTIL } = require('jsrsasign');
+const { KJUR, KEYUTIL, X509 } = require('jsrsasign');
 const CryptoJS = require('crypto-js');
 
 
 const filePath = path.join(process.cwd(), '/connection.yaml');
 let fileContents = fs.readFileSync(filePath, 'utf8');
 let connectionFile = yaml.safeLoad(fileContents);
+
+const caCertPath = path.resolve(__dirname, '..', '..', '..', '..', 'fabric-samples', 'raft-5node-swarm', 'crypto-config', 'peerOrganizations', 'org1.example.com', 'ca', 'ca.org1.example.com-cert.pem');
+const caCert = fs.readFileSync(caCertPath, 'utf8');
 
 // 계약서 생성에 필요한 계약서 전체 갯수 불러오기
 exports.totalNumberContracts = async function(userName) {
@@ -175,6 +178,7 @@ exports.selectContract = async function(key, userName) {
             response.error = 'An identity for the user ' + userName + ' does not exist in the wallet. Register ' + userName + ' first';
             return response;
         }
+
         // Create a new gateway for connecting to our peer node.
         const gateway = new Gateway();
         await gateway.connect(connectionFile, { wallet, identity: userName, discovery: { enabled: true, asLocalhost: true } });
@@ -182,14 +186,78 @@ exports.selectContract = async function(key, userName) {
         const network = await gateway.getNetwork('mychannel');
         // Get the contract from the network.
         const contract = network.getContract('contract');
-        // Submit the specified transaction.
-        // ModifyContract transaction - requires 2 args , ex: ('ModifyContract', 'CAR10', 'Dave')
-        // await contract.evaluateTransaction('SelectContract', key);
-        // console.log('Transaction has been submitted');
-        // Disconnect from the gateway.
-        // await gateway.disconnect();
         const result = await contract.evaluateTransaction('selectContract',key);
         // response.msg = ' select Result submitted';
+        // 상세조회에서 나온 값 추출
+        let resultJSON = JSON.parse(result);
+
+
+        // pdf 파일 불러오기
+        const filename = path.resolve(__dirname + '..','..', '..','uploads','표준근로계약서.pdf');
+        const fileLoaded = fs.readFileSync(filename, 'utf8');
+        // 불러온 pdf 파일 hash 값 추출
+        var hashToAction = CryptoJS.SHA256(fileLoaded).toString();
+        console.log("Hash of the file: " + hashToAction);
+        console.log("");
+
+        // 갑 인증서 불러오기
+        const certfile = path.resolve(__dirname + '..','..', '..','wallet', resultJSON.contract_writer, resultJSON.contract_writer);
+        const certLoaded = fs.readFileSync(certfile, 'utf8');
+        const certfileObj = JSON.parse(certLoaded);
+        // console.log(certfileObj.enrollment.identity.certificate);
+        const certificate = certfileObj.enrollment.identity.certificate;
+
+        console.log("갑 계약서 서명 시간 " + resultJSON.contract_timeA);
+        console.log("");
+
+        // Show info about certificate provided
+        const certAObj = new X509();
+        certAObj.readCertPEM(certificate);
+        console.log("Detail of certificate provided")
+        console.log("Subject: " + certAObj.getSubjectString());
+        console.log("Issuer (CA) Subject: " + certAObj.getIssuerString());
+        console.log("Valid period: " + certAObj.getNotBefore() + " to " + certAObj.getNotAfter());
+        console.log("CA Signature validation: " + certAObj.verifySignature(KEYUTIL.getKey(caCert)));
+        console.log("");
+
+        // perform signature checking
+        var userPublicKey = KEYUTIL.getKey(certificate);
+        var recover = new KJUR.crypto.Signature({"alg": "SHA256withECDSA"});
+        recover.init(userPublicKey);
+        recover.updateHex(hashToAction);
+        var getBackSigValueHex = new Buffer.from(resultJSON.contract_hashA, 'base64').toString('hex');
+        console.log("갑 서명 확인 Signature verified with certificate provided: " + recover.verify(getBackSigValueHex));
+        console.log("");
+
+        // 을 인증서 불러오기
+        const certBfile = path.resolve(__dirname + '..','..', '..','wallet', resultJSON.contract_receiver, resultJSON.contract_receiver);
+        const certBLoaded = fs.readFileSync(certBfile, 'utf8');
+        const certBfileObj = JSON.parse(certBLoaded);
+        // console.log(certBfileObj.enrollment.identity.certificate);
+        const certificateB = certBfileObj.enrollment.identity.certificate;
+
+        console.log("을 계약서 서명 시간 " + resultJSON.contract_timeB);
+        console.log("");
+
+        // Show info about certificate provided
+        const certBObj = new X509();
+        certBObj.readCertPEM(certificateB);
+        console.log("Detail of certificate provided")
+        console.log("계약자: " + certBObj.getSubjectString());
+        console.log("Issuer (CA) Subject: " + certBObj.getIssuerString());
+        console.log("Valid period: " + certBObj.getNotBefore() + " to " + certBObj.getNotAfter());
+        console.log("CA Signature validation: " + certBObj.verifySignature(KEYUTIL.getKey(caCert)));
+        console.log("");
+
+        // perform signature checking
+        var userBPublicKey = KEYUTIL.getKey(certificateB);
+        var recover = new KJUR.crypto.Signature({"alg": "SHA256withECDSA"});
+        recover.init(userBPublicKey);
+        recover.updateHex(hashToAction);
+        var getBackSigValueHex = new Buffer.from(resultJSON.contract_hashB, 'base64').toString('hex');
+        console.log("을 서명 확인 Signature verified with certificate provided: " + recover.verify(getBackSigValueHex));
+        console.log("");
+
         return result;        
     } catch (error) {
         console.error(`Failed to evaluate transaction: ${error}`);
