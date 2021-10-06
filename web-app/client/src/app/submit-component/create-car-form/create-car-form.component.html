@@ -1,5 +1,5 @@
 <div>
-  <form #f="ngForm" (ngSubmit)="onSubmit(f.value)">
+  <form #f="ngForm" (ngSubmit)="onSubmit(f.value)" (ngSubmit)="onFileSubmit(fileInput.files)">
     <div class="form-group contract_name">
       <label for="contract_name">계약서명</label>
       <input type="text" class="form-control" name="contract_name" required ngModel>
@@ -23,6 +23,19 @@
       <label for="contract_period">계약 기간</label>
       <input type="text" class="form-control" name="contract_period" required ngModel>
     </div>
+
+  
+    <input class="file" type='file' (change)="onFileChange(fileInput.files)" #fileInput />
+      
+
+    
     <button [disabled]="!f.valid" type="submit" class="btn btn-success">확인</button>
   </form>
 </div>
+
+<!-- <div>
+  <form class="upload" (ngSubmit)="onFileSubmit(fileInput.files)">
+    <input type='file' (change)="onFileChange(fileInput.files)" #fileInput />
+    <button type='submit'> 업로드 </button>
+  </form>
+</div> -->
