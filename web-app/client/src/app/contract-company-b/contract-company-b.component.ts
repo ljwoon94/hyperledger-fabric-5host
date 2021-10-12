@@ -31,7 +31,7 @@ export class ContractCompanyBComponent implements OnInit {
   async onSubmit(data){
     console.log("key >>> ", this.cars.key, "\nsignB >>> ", data.contract_signB, "\nstate >>> ", this.cars.state );
     this.router.navigate(['main']);
-    return await this.apiService.makeContract(this.cars.key,data.contract_signB, this.cars.state, this._info.id);
+    return await this.apiService.makeContract(this.cars.key,data.contract_signB, this.cars.state, this._info.id, this.cars.contract_contract_name);
 
   }
 

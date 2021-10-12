@@ -50,7 +50,7 @@ exports.totalNumberContracts = async function (userName) {
     }
 }
 // 계약서 생성
-exports.createContract = async function (key, contract_name, contract_contents, contract_companyA, contract_companyB, contract_date, contract_period, state, userName) {
+exports.createContract = async function (key, contract_name, contract_contents, contract_companyA, contract_companyB, contract_date, contract_period, contract_contract_name , contract_contract_buffer, state, userName) {
     try {
         var response = {};
         // Create a new file system based wallet for managing identities.
@@ -76,7 +76,7 @@ exports.createContract = async function (key, contract_name, contract_contents, 
         const contract = network.getContract('contract');
         // Submit the specified transaction.
         // CreateContract transaction - requires 5 argument, ex: ('CreateContract', 'CAR12', 'Honda', 'Accord', 'Black', 'Tom')
-        await contract.submitTransaction('createContract', key, contract_name, contract_contents, contract_companyA, contract_companyB, contract_date, contract_period, state, userName);
+        await contract.submitTransaction('createContract', key, contract_name, contract_contents, contract_companyA, contract_companyB, contract_date, contract_period, contract_contract_name, contract_contract_buffer, state, userName);
         console.log('Transaction has been submitted');
         // Disconnect from the gateway.
         await gateway.disconnect();
@@ -88,6 +88,47 @@ exports.createContract = async function (key, contract_name, contract_contents, 
         return response;
     }
 }
+
+// 계약서 업로드
+exports.uploadContract = async function (key, contract_contract_name, contract_contract_buffer, userName) {
+    try {
+        var response = {};
+        // Create a new file system based wallet for managing identities.
+        const walletPath = path.join(process.cwd(), 'wallet');
+        const wallet = new FileSystemWallet(walletPath);
+        console.log(`Wallet path: ${walletPath}`);
+        // Check to see if we've already enrolled the user.
+        const userExists = await wallet.exists(userName);
+        if (!userExists) {
+            console.log('An identity for the user ' + userName + ' does not exist in the wallet');
+            console.log('Run the registerUser.js application before retrying');
+            response.error = 'An identity for the user ' + userName + ' does not exist in the wallet. Register ' + userName + ' first';
+            return response;
+        }
+        // Create a new gateway for connecting to our peer node.
+        console.log('we here in uploadContract')
+        const gateway = new Gateway();
+        await gateway.connect(connectionFile, { wallet, identity: userName, discovery: { enabled: true, asLocalhost: true } });
+
+        // Get the network (channel) our contract is deployed to.
+        const network = await gateway.getNetwork('mychannel');
+        // Get the contract from the network.
+        const contract = network.getContract('contract');
+        // Submit the specified transaction.
+        // uploadContract transaction - requires 5 argument, ex: ('uploadContract', 'CAR12', 'Honda', 'Accord', 'Black', 'Tom')
+        await contract.submitTransaction('uploadContract', key, contract_contract_name, contract_contract_buffer);
+        console.log('Transaction has been submitted');
+        // Disconnect from the gateway.
+        await gateway.disconnect();
+        response.msg = 'uploadContract Transaction has been submitted';
+        return response;
+    } catch (error) {
+        console.error(`Failed to submit transaction: ${error}`);
+        response.error = error.message;
+        return response;
+    }
+}
+
 // 계약서 수정
 exports.modifyContract = async function (key, new_contract_name, new_contract_contents, new_contract_companyB, new_contract_receiver, new_contract_date, new_contract_period, userName) {
     try {
@@ -153,7 +194,8 @@ exports.queryContractList = async function (userName) {
         // Evaluate the specified transaction.
         // QueryContractList transaction - requires no arguments, ex: ('QueryContractList')
         const result = await contract.evaluateTransaction('queryContractList', userName);
-        console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
+        console.log(`Transaction has been evaluated`);
+        // console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
         return result;
     } catch (error) {
         console.error(`Failed to evaluate transaction: ${error}`);
@@ -189,11 +231,12 @@ exports.selectContract = async function (key, userName) {
         const result = await contract.evaluateTransaction('selectContract', key);
         // response.msg = ' select Result submitted';
         // 상세조회에서 나온 값 추출
+        console.log(result)
         let resultJSON = JSON.parse(result);
 
 
         // pdf 파일 불러오기
-        const filename = path.resolve(__dirname + '..', '..', '..', 'uploads', '부동산매매계약서.pdf');
+        const filename = path.resolve(__dirname + '..', '..', '..', 'uploads', resultJSON.contract_contract_name);
         const fileLoaded = fs.readFileSync(filename, 'utf8');
         // 불러온 pdf 파일 hash 값 추출
         var hashToAction = CryptoJS.SHA256(fileLoaded).toString();
@@ -270,7 +313,7 @@ exports.selectContract = async function (key, userName) {
     }
 }
 // 계약서 전송
-exports.sendContract = async function (key, contract_signA, contract_receiver, state, userName) {
+exports.sendContract = async function (key, contract_signA, contract_receiver, state, userName, contract_contract_name) {
     try {
         var response = {};
         // Create a new file system based wallet for managing identities.
@@ -286,7 +329,7 @@ exports.sendContract = async function (key, contract_signA, contract_receiver, s
             return response;
         }
 
-        var filename = path.resolve(__dirname + '..', '..', '..', 'uploads', '부동산매매계약서.pdf');
+        var filename = path.resolve(__dirname + '..', '..', '..', 'uploads', contract_contract_name);
 
         // 업로드한 pdf 파일 해시화
         // calculate Hash from the specified file
@@ -333,7 +376,7 @@ exports.sendContract = async function (key, contract_signA, contract_receiver, s
 }
 
 // 계약서 완료
-exports.signedContract = async function (key, contract_signB, state, userName) {
+exports.signedContract = async function (key, contract_signB, state, userName, contract_contract_name) {
     try {
         var response = {};
         // Create a new file system based wallet for managing identities.
@@ -348,7 +391,7 @@ exports.signedContract = async function (key, contract_signB, state, userName) {
             return;
         }
 
-        var filename = path.resolve(__dirname + '..', '..', '..', 'uploads', '부동산매매계약서.pdf');
+        var filename = path.resolve(__dirname + '..', '..', '..', 'uploads', contract_contract_name);
         // 업로드한 pdf 파일 해시화
         // calculate Hash from the specified file
         const fileLoaded = fs.readFileSync(filename, 'utf8');

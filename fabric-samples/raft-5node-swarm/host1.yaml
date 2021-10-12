@@ -27,7 +27,19 @@ services:
       - FABRIC_CA_SERVER_CA_NAME=ca.org1.example.com
       - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org1.example.com-cert.pem
       # - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/ef5cb5b9ef770fb136dd2084d90b1be591b3cd70e90b885a8b1f8ec618b914e6_sk
+      # https://velog.io/@jaehyuen/Hyperledger-Fabric-2.2-%EC%8B%A4%EC%8A%B5-2-Fabric-ca-%EA%B5%AC%EC%B6%95-%EB%B0%8F-%EC%9D%B8%EC%A6%9D%EC%84%9C-%EB%B0%9C%EA%B8%89
       - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/${BYFN_CA1_PRIVATE_KEY}
+      - FABRIC_CA_SERVER_SIGNING_DEFAULT_EXPIRY=876000h # ca server 에서 발급하는 인증서 유효기간(약 100년)
+      - FABRIC_CA_SERVER_SIGNING_PROFILES_CA_EXPIRY=876000h # ca server 에서 발급하는 인증서(CA) 유효기간(약 100년)
+      - FABRIC_CA_SERVER_SIGNING_PROFILES_TLS_EXPIRY=876000h # ca server 에서 발급하는 인증서(TLS) 유효기간(약 100년)
+      - FABRIC_CA_SERVER_CSR_CA_EXPIRY=876000h # ca server root 인증서 유효기간(약 100년)
+      # - FABRIC_CA_SERVER_NAMES_CSR_CN=ca.org1.example.com #ca 서버명
+      # - FABRIC_CA_SERVER_NAMES_CSR_O=nsmart # 조직명
+      - FABRIC_CA_SERVER_CSR_NAMES_L=Seocho-gu # 구/군
+      - FABRIC_CA_SERVER_CSR_NAMES_ST=Seoul # 시.도명
+      - FABRIC_CA_SERVER_CSR_NAMES_C=KR # 국가명
+      - TZ=Asia/Seoul # 컨테이너 타임존 설정
+
     ports:
       - "7054:7054"
     command: sh -c 'fabric-ca-server start -b admin:adminpw'

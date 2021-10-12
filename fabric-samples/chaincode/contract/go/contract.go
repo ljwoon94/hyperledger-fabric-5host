@@ -22,21 +22,23 @@ type SmartContract struct {
 
 // Define the car structure, with 4 properties.  Structure tags are used by encoding/json library
 type Contract struct {
-	Contract_companyA string `json:"contract_companyA"`
-	Contract_companyB string `json:"contract_companyB"`
-	Contract_contents string `json:"contract_contents"`
-	Contract_date     string `json:"contract_date"`
-	Contract_name     string `json:"contract_name"`
-	Contract_period   string `json:"contract_period"`
-	Contract_receiver string `json:"contract_receiver"`
-	Contract_signA    string `json:"contract_signA"`
-	Contract_signB    string `json:"contract_signB"`
-	Contract_writer   string `json:"contract_writer"`
-	State             string `json:"state"`
-	Contract_hashA    string `json:"contract_hashA"`
-	Contract_hashB    string `json:"contract_hashB"`
-	Contract_timeA    string `json:"contract_timeA"`
-	Contract_timeB    string `json:"contract_timeB"`
+	Contract_companyA        string `json:"contract_companyA"`
+	Contract_companyB        string `json:"contract_companyB"`
+	Contract_contents        string `json:"contract_contents"`
+	Contract_date            string `json:"contract_date"`
+	Contract_name            string `json:"contract_name"`
+	Contract_period          string `json:"contract_period"`
+	Contract_receiver        string `json:"contract_receiver"`
+	Contract_signA           string `json:"contract_signA"`
+	Contract_signB           string `json:"contract_signB"`
+	Contract_writer          string `json:"contract_writer"`
+	State                    string `json:"state"`
+	Contract_hashA           string `json:"contract_hashA"`
+	Contract_hashB           string `json:"contract_hashB"`
+	Contract_timeA           string `json:"contract_timeA"`
+	Contract_timeB           string `json:"contract_timeB"`
+	Contract_contract_name   string `json:"contract_contract_name"`
+	Contract_contract_buffer string `json:"contract_contract_buffer"`
 }
 
 /*
@@ -153,11 +155,11 @@ func (s *SmartContract) totalNumberContracts(APIstub shim.ChaincodeStubInterface
 // 계약서 생성
 func (s *SmartContract) createContract(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
 
-	if len(args) != 9 {
+	if len(args) != 11 {
 		return shim.Error("Incorrect number of arguments. Expecting 9")
 	}
 
-	var car = Contract{Contract_name: args[1], Contract_contents: args[2], Contract_companyA: args[3], Contract_companyB: args[4], Contract_date: args[5], Contract_period: args[6], State: args[7], Contract_writer: args[8]}
+	var car = Contract{Contract_name: args[1], Contract_contents: args[2], Contract_companyA: args[3], Contract_companyB: args[4], Contract_date: args[5], Contract_period: args[6], Contract_contract_name: args[7], Contract_contract_buffer: args[8], State: args[9], Contract_writer: args[10]}
 
 	carAsBytes, _ := json.Marshal(car)
 	APIstub.PutState(args[0], carAsBytes)

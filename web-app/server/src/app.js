@@ -168,65 +168,102 @@ app.post("/login", (req, res) => {
 });
 
 
-// pdf 파일 업로드
-/* 파일의 이름을 관리하기 위해 multer의 diskStorage 함수로 
-    디렉터리와 파일명에 대한 객체를 생성해서, 
-    업로드 객체를 생성할때 storage 멤버로 전달하면 된다.*/
-const storage = multer.diskStorage({
-  destination(req, file, callback) {
-    callback(null, "uploads/") // 파일 업로드 경로
-  },
-  filename(req, file, callback) {
-    callback(null, file.originalname) // 전송자가 보낸 원래 이름으로 저장
-  }
-});
+// // pdf 파일 업로드
+// /* 파일의 이름을 관리하기 위해 multer의 diskStorage 함수로 
+//     디렉터리와 파일명에 대한 객체를 생성해서, 
+//     업로드 객체를 생성할때 storage 멤버로 전달하면 된다.*/
+// const storage = multer.diskStorage({
+//   destination(req, file, callback) {
+//     callback(null, "uploads/") // 파일 업로드 경로
+//   },
+//   filename(req, file, callback) {
+//     callback(null, file.originalname) // 전송자가 보낸 원래 이름으로 저장
+//   }
+// });
 
-// 파일 업로드 경로와 파일 용량 제한 설정
-const upload = multer({ storage: storage, limits: { fileSize: 1024 * 1000 * 16 } });
+// // 파일 업로드 경로와 파일 용량 제한 설정
+// const upload = multer({ storage: storage, limits: { fileSize: 1024 * 1000 * 16 } });
 
 // 업로드 요청 처리
-app.post('/upload', upload.single('file'), async (req, res) => {
-  console.log(req.file);
-  const originalFileName = req.file.originalname // 원본 파일명
-  const savePath = req.file.path // 파일 경로
-  const fileSize = req.file.size // 파일 사이즈
+// app.post('/upload', upload.single('file'), async (req, res) => {
+//   console.log(req.file);
+//   const originalFileName = req.file.originalname // 원본 파일명
+//   const savePath = req.file.path // 파일 경로
+//   const fileSize = req.file.size // 파일 사이즈
 
-  network.totalNumberContracts("admin")
-    .then((response) => {
-      const carsRecord = JSON.parse(response);
-      const numCars = String(carsRecord.length + 1);
-      // 자리수 만큼 남는 공간 0으로 채우기
-      const newKey = numCars.padStart(8, '0');
-  
-  // 파일시스템에서 파일 열기
-  fs.open(savePath, "r", function (err, fd) {
-    // binary 데이터를 저장하기 위해 파일 사이즈 만큼의 크기를 갖는 Buffer 객체 생성
-    const buffer = Buffer.alloc(fileSize);
-    fs.read(fd, buffer, 0, buffer.length, null, function (err, bytes, buffer) {
-      const obj = {
-        "originalFileName": originalFileName,
-        "filePath": savePath,
-        "fileSize": fileSize,
-        "file": buffer,
-        "Key": newKey
-      };
+//   network.totalNumberContracts("admin")
+//     .then((response) => {
+//       const carsRecord = JSON.parse(response);
+//       const numCars = String(carsRecord.length + 1);
+//       // 자리수 만큼 남는 공간 0으로 채우기
+//       const newKey = numCars.padStart(8, '0');
 
-      const newData = new fileInfoSchema(obj);
-      newData.save(function (err) { // 저장
-        if (err) {
-          res.send(err);
-        } // db에 모든 작업이 올라간 후에 uploads에 있는 파일이 지워진다.
-        // fs.unlink(savePath, function () { }) // 파일 삭제
-        console.log("----- uploads에 있는 파일 삭제 완료 -----");
-      });
-    })
-  })
-})
-});
+//       // 파일시스템에서 파일 열기
+//       fs.open(savePath, "r", function (err, fd) {
+//         // binary 데이터를 저장하기 위해 파일 사이즈 만큼의 크기를 갖는 Buffer 객체 생성
+//         const buffer = Buffer.alloc(fileSize);
+//         fs.read(fd, buffer, 0, buffer.length, null, function (err, bytes, buffer) {
+//           const obj = {
+//             "originalFileName": originalFileName,
+//             "filePath": savePath,
+//             "fileSize": fileSize,
+//             "file": buffer,
+//             "Key": newKey
+//           };
+
+//           const newData = new fileInfoSchema(obj);
+//           newData.save(function (err) { // 저장
+//             if (err) {
+//               res.send(err);
+//             } // db에 모든 작업이 올라간 후에 uploads에 있는 파일이 지워진다.
+//             // fs.unlink(savePath, function () { }) // 파일 삭제
+//             console.log("----- uploads에 있는 파일 삭제 완료 -----");
+//           });
+//           console.log(`유저네임-----------------<` + req.body.userName);
+//           network.uploadContract(newKey, obj.originalFileName, (obj.file).toString('utf8'), req.body.userName)
+//             .then((response) => {
+//               res.send(response)
+//             })
+//         })
+//       })
+//     })
+// });
 
 
 
-// pdf 파일 다운로드
+// // pdf 파일 다운로드 mongodb 버전
+// app.get('/download/:fileName', async (req, res) => {
+//   const base64 = require('base64topdf');
+//   //  id를 사용해 데이터를 찾음
+//    const key = req.params.fileName
+//   //  const getFileCriteria = {
+//   //   key: ObjectId(key)
+//   //  }
+
+//    console.log('[[[ getFileCriteria ]]]', key)
+
+//    const fileInfo = await fileInfoSchema.findOne({Key : key});
+
+//    if(!fileInfo) {
+//      res.status(500).send({
+//        message: 'DB Error'
+//      });
+//    }
+
+//   console.log(fileInfo.file.buffer);
+
+//   // pdf encoding
+//   base64EncodedText = Buffer.from(fileInfo.file.buffer, "utf8").toString('base64');
+
+//   // pdf decoding
+//   base64.base64Decode(base64EncodedText, __dirname +'/../downloads/'+'다운로드할파일.pdf');
+//   let file = __dirname +'/../downloads/'+'다운로드할파일.pdf'
+
+//   res.download(file)
+
+// });
+
+// pdf 파일 다운로드 블록체인 버전
 app.get('/download/:fileName', async (req, res) => {
   const base64 = require('base64topdf');
   //  id를 사용해 데이터를 찾음
@@ -234,31 +271,31 @@ app.get('/download/:fileName', async (req, res) => {
   //  const getFileCriteria = {
   //   key: ObjectId(key)
   //  }
-
-   console.log('[[[ getFileCriteria ]]]', key)
-
-   const fileInfo = await fileInfoSchema.findOne({Key : key});
-
-   if(!fileInfo) {
-     res.status(500).send({
-       message: 'DB Error'
-     });
-   }
-
-  console.log(fileInfo.file.buffer);
+  console.log('')
+  console.log('--------------------------------------------')
+  console.log(key)
+  console.log('--------------------------------------------')
+  console.log('')
+  network.selectContract(key, 'admin')
+    .then((response) => {
+    // 인코딩 된 계약서 불러오기
+    console.log('')
+    console.log('--------------------------------------------')
+    // 블록체인에서 온 데이터 json화
+    let responseJSON = JSON.parse(response);
+    console.log('--------------------------------------------')
+    console.log('')
+    const base64EncodedText = responseJSON.contract_contract_buffer;
+    //console.log(base64EncodedText);
+    // pdf decoding
+    base64.base64Decode(base64EncodedText, __dirname +'/../downloads/'+'다운로드할파일.pdf');
+    let file = __dirname +'/../downloads/'+'다운로드할파일.pdf'
+    
+    res.download(file)
+  })
   
-  // pdf encoding
-  base64EncodedText = Buffer.from(fileInfo.file.buffer, "utf8").toString('base64');
-  
-  // pdf decoding
-  base64.base64Decode(base64EncodedText, __dirname +'/../downloads/'+'다운로드할파일.pdf');
-  let file = __dirname +'/../downloads/'+'다운로드할파일.pdf'
 
-  res.download(file)
-  
 });
-
-
 
 
 
@@ -279,27 +316,69 @@ app.post('/querySelectCar', (req, res) => {
       res.send(response)
     })
 });
-// 계약서 생성
-app.post('/createCar', (req, res) => {
-  console.log(req.body);
-  // 계약서 전체 갯수 불러오기
 
+
+// pdf 파일 업로드
+/* 파일의 이름을 관리하기 위해 multer의 diskStorage 함수로 
+    디렉터리와 파일명에 대한 객체를 생성해서, 
+    업로드 객체를 생성할때 storage 멤버로 전달하면 된다.*/
+const storage = multer.diskStorage({
+  destination(req, file, callback) {
+    callback(null, "uploads/") // 파일 업로드 경로
+  },
+  filename(req, file, callback) {
+    callback(null, file.originalname) // 전송자가 보낸 원래 이름으로 저장
+  }
+});
+
+// 파일 업로드 경로와 파일 용량 제한 설정
+const upload = multer({ storage: storage, limits: { fileSize: 1024 * 1000 * 16 } });
+
+
+// 계약서 생성
+app.post('/createCar', upload.single('file'), (req, res) => {
+  const originalFileName = req.file.originalname // 원본 파일명
+  const savePath = req.file.path // 파일 경로
+  const fileSize = req.file.size // 파일 사이즈
+
+  // 계약서 생성에 필요한 전체 계약서의 갯수 조회
   network.totalNumberContracts(req.body.userName)
     .then((response) => {
       var carsRecord = JSON.parse(response);
       var numCars = String(carsRecord.length + 1);
       // 자리수 만큼 남는 공간 0으로 채우기
+      // 전체 계약서 번호 생성 (id 생성)
       var newKey = numCars.padStart(8, '0');
-
-
-
       console.log("newkey >>>>>>>>>>>", newKey)
-      // 계약상태
-      var newState = '계약 대기'
-      network.createContract(newKey, req.body.contract_name, req.body.contract_contents, req.body.contract_companyA, req.body.contract_companyB, req.body.contract_date, req.body.contract_period, newState, req.body.userName)
-        .then((response) => {
-          res.send(response)
+      // 파일시스템에서 파일 열기
+      fs.open(savePath, "r", function (err, fd) {
+        // binary 데이터를 저장하기 위해 파일 사이즈 만큼의 크기를 갖는 Buffer 객체 생성
+        const buffer = Buffer.alloc(fileSize);
+        fs.read(fd, buffer, 0, buffer.length, null, function (err, bytes, buffer) {
+          const obj = {
+            "originalFileName": originalFileName,
+            "filePath": savePath,
+            "fileSize": fileSize,
+            "file": buffer,
+            "Key": newKey
+          };
+          const newData = new fileInfoSchema(obj);
+          newData.save(function (err) { // 저장
+            if (err) {
+              res.send(err);
+            } // db에 모든 작업이 올라간 후에 uploads에 있는 파일이 지워진다.
+            // fs.unlink(savePath, function () { }) // 파일 삭제
+            console.log("----- uploads에 있는 파일 삭제 완료 -----");
+          });
+          // 계약상태
+          var newState = '계약 대기'
+          base64EncodedText = Buffer.from(obj.file, "utf8").toString('base64');
+          network.createContract(newKey, req.body.contract_name, req.body.contract_contents, req.body.contract_companyA, req.body.contract_companyB, req.body.contract_date, req.body.contract_period, obj.originalFileName, base64EncodedText, newState, req.body.userName)
+            .then((response) => {
+              res.send(response)
+            })
         })
+      })
     })
 })
 // 계약서 수정
@@ -312,7 +391,7 @@ app.post('/changeCarOwner', (req, res) => {
 app.post('/sendContract', (req, res) => {
   const changeState = '계약 중';
   console.log(req.body);
-  network.sendContract(req.body.key, req.body.contract_signA, req.body.contract_receiver, changeState, req.body.userName)
+  network.sendContract(req.body.key, req.body.contract_signA, req.body.contract_receiver, changeState, req.body.userName, req.body.contract_contract_name)
     .then((response) => {
       res.send(response)
     })
@@ -320,7 +399,7 @@ app.post('/sendContract', (req, res) => {
 app.post('/makeContract', (req, res) => {
   const changeState = '계약 완료';
   console.log(req.body);
-  network.signedContract(req.body.key, req.body.contract_signB, changeState, req.body.userName)
+  network.signedContract(req.body.key, req.body.contract_signB, changeState, req.body.userName, req.body.contract_contract_name)
     .then((response) => {
       res.send(response)
     })

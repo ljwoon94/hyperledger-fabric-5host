@@ -29,9 +29,9 @@ export class ContractCompanyAComponent implements OnInit {
   }
 
   async onSubmit(data){
-    console.log(this.cars.key,data.contract_signA, data.contract_receiver, this.cars.state );
+    console.log(this.cars.key,data.contract_signA, data.contract_receiver, this.cars.state, this.cars.contract_contract_name);
     this.router.navigate(['main']);
-    return await this.apiService.sendContract(this.cars.key,data.contract_signA, data.contract_receiver, this.cars.state, this._info.id);
+    return await this.apiService.sendContract(this.cars.key,data.contract_signA, data.contract_receiver, this.cars.state, this._info.id, this.cars.contract_contract_name);
 
   }
 

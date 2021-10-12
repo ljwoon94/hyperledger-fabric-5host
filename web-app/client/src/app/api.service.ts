@@ -68,7 +68,7 @@ export class ApiService {
   }
 
   // 계약서 작성
-  createCar(contract_name: string, contract_contents: string, contract_companyA: string, contract_companyB: string, contract_date: string, contract_period: string, userName: string) {
+  createCar(contract_name: string, contract_contents: string, contract_companyA: string, contract_companyB: string, contract_date: string, contract_period: string, userName: string, formData: string) {
     return this.http.post(baseURL + createCarURL, ({
       'contract_name': contract_name,
       'contract_contents': contract_contents,
@@ -106,14 +106,14 @@ export class ApiService {
   }
 
   // 계약서 전송 (갑 > 을)
-  sendContract(key: string, contract_signA: string, contract_receiver: string, changeState: string, userName: string) {
-    return this.http.post(baseURL + sendContractURL, { 'key': key, 'contract_signA': contract_signA, 'contract_receiver': contract_receiver, 'changeState': changeState , 'userName' : userName },
+  sendContract(key: string, contract_signA: string, contract_receiver: string, changeState: string, userName: string, contract_contract_name: string) {
+    return this.http.post(baseURL + sendContractURL, { 'key': key, 'contract_signA': contract_signA, 'contract_receiver': contract_receiver, 'changeState': changeState , 'userName' : userName, 'contract_contract_name' : contract_contract_name },
       { headers }).toPromise().then((result) => { this.queryAllCars(userName); });
   }
 
   // 계약서 최종 서명 (을)
-  makeContract(key: string, contract_signB: string, changeState: string, userName: string) {
-    return this.http.post(baseURL + makeContractURL, { 'key': key, 'contract_signB': contract_signB, 'changeState': changeState , 'userName' : userName },
+  makeContract(key: string, contract_signB: string, changeState: string, userName: string, contract_contract_name: string) {
+    return this.http.post(baseURL + makeContractURL, { 'key': key, 'contract_signB': contract_signB, 'changeState': changeState , 'userName' : userName , 'contract_contract_name' : contract_contract_name},
       { headers }).toPromise().then((result) => { this.queryAllCars(userName); });
   }
 }
